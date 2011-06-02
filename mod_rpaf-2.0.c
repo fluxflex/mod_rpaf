@@ -135,11 +135,28 @@ static const char *rpaf_sethostname(cmd_parms *cmd, void *dummy, int flag) {
     return NULL;
 }
 
+// ptn: patern
+// tgt: target
+static int match(const char *ptn, const char *tgt){
+  switch( *ptn ){
+    case '\0':
+      return '\0' == *tgt;
+    case '*':
+      return match( ptn+1, tgt )
+          || (('\0' != *tgt) && match( ptn, tgt+1 ));
+    default:
+      return ((unsigned char)*ptn == (unsigned char)*tgt)
+          && match( ptn+1, tgt+1 );
+  }
+}
+
 static int is_in_array(const char *remote_ip, apr_array_header_t *proxy_ips) {
     int i;
     char **list = (char**)proxy_ips->elts;
     for (i = 0; i < proxy_ips->nelts; i++) {
-        if (strcmp(remote_ip, list[i]) == 0)
+        // proxy_ips <- ip address's array
+        // if mutch ip address, return 1
+        if (match(list[i], remote_ip) == 1)
             return 1;
     }
     return 0;
